@@ -13,17 +13,13 @@ data = st.text_input("Paste text here")
 for item in data:
     parts = item.split('|')
     for part in parts:
-        name, frequency = part.rsplit(' ', 1)
-        frequency = int(frequency)
+        words = part.split()
+        name = " ".join(words[:-1])  # Join all words except the last one
+        frequency = int(words[-1])
         spokesperson_data[name] += frequency
 
 # Step 2: Create a DataFrame for the table
 df = pd.DataFrame(list(spokesperson_data.items()), columns=["Spokesperson", "Frequency"])
-
-df = df.sort_values(by='Frequency', ascending=False)
-
-# Display the DataFrame using Streamlit
-st.write(df)
 
 # Step 3: Create the CSV table
 st.write("CSV Table:")
