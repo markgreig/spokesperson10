@@ -2,35 +2,26 @@
 # coding: utf-8
 
 # In[ ]:
-from collections import Counter
 import pandas as pd
-import re
 import streamlit as st
+from io import StringIO
 
-spokesperson_data = Counter()
 data = st.text_input("Paste text here")
 
-for item in data:
-    parts = item.split('|')
-    for part in parts:
-        words = part.split()
-        name = " ".join(words[:-1])  # Join all words except the last one
-        frequency = int(words[-1])
-        spokesperson_data[name] += frequency
+# Read the data into a pandas DataFrame
+df = pd.read_csv(StringIO(data), sep='\t')
 
-# Step 2: Create a DataFrame for the table
-df = pd.DataFrame(list(spokesperson_data.items()), columns=["Spokesperson", "Frequency"])
+# Expand the DataFrame to create a new row for each spokesperson in rows with multiple spokespeople
+df = df.assign(Spokesperson=df['Spokesperson'].str.split('|')).explode('Spokesperson')
 
-# Step 3: Create the CSV table
-st.write("CSV Table:")
+# Group by 'Spokesperson' and sum the 'Frequency'
+df = df.groupby('Spokesperson', as_index=False).sum()
+
+# Display the DataFrame in Streamlit
 st.dataframe(df)
 
-# Step 4: Generate and download the CSV file
-csv_file = df.to_csv(index=False)
-st.download_button(
-    label="Download CSV",
-    data=csv_file.encode(),
-    key="download-button",
-    file_name="spokesperson_frequency.csv",
-    mime="text/csv",
-)
+# Write the DataFrame to a CSV file and provide a download link in Streamlit
+csv = df.to_csv(index=False)
+b64 = base64.b64encode(csv.encode()).decode()  # some strings
+linko= f'<a href="data:file/csv;base64,{b64}" download="myfilename.csv">Download csv file</a>'
+st.markdown(linko, unsafe_allow_html=True)
