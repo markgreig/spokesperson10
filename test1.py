@@ -5,54 +5,51 @@
 
 
 import re
-import pandas as pd
 import streamlit as st
+
+st.title('My App') 
+
+
+import pandas as pd
 
 text = st.text_input("Paste text here")
 
-# Phase 1 - split rows on '\n'
-rows = text.split('\n')
+# Extract rows
+rows = re.findall(r'([^\d]+ [\d\w]+ [^\d]+)\s(\d+)', text)
 
-# Phase 2 - extract names and numbers
-pattern = '(.+?) (\d+)'
-
+# Split spokesperson column 
 data = []
-
 for row in rows:
-    if '|' in row:
-        match = re.search(pattern, row)
-        if match:
-            name = match.group(1)
-            number = int(match.group(2))
-            data.append([name, number])
-    else:
-        names = row.split()
-        for name in names[:-1]:
-            data.append([name, int(names[-1])])
+  spokesperson = row[0].strip()
+  spokespeople = spokesperson.split('|')
+  spokespeople = [name.strip() for name in spokespeople]
+  frequency = int(row[1])
+  
+  for spokesperson in spokespeople:
+    data.append([spokesperson, frequency])
 
-# Create a DataFrame
+# Create dataframe  
 df = pd.DataFrame(data, columns=['Spokesperson', 'Frequency'])
 
-# Group and aggregate the data
-top_spokespeople = df.groupby('Spokesperson')['Frequency'].sum().reset_index()
+# Group by Spokesperson and calculate the sum of Frequency
+result = df.groupby('Spokesperson')['Frequency'].sum().reset_index()
 
-# Sort the data by frequency in descending order
-top_spokespeople = top_spokespeople.sort_values(by='Frequency', ascending=False)
+# Sort by Frequency in descending order
+result = result.sort_values(by='Frequency', ascending=False)
 
-# Display the DataFrame using Streamlit
-st.write(top_spokespeople)
+result.to_csv('top_spokespeople.csv', index=False)
 
-# Download button for CSV
+
 @st.cache
-def convert_df_to_csv(result):
-    return result.to_csv(index=False).encode('utf-8')
+def convert_df(result):
+     return result.to_csv().encode('utf-8')
 
-csv = convert_df_to_csv(top_spokespeople)
+csv = convert_df(result)
 
 st.download_button(
-    label="Download data as CSV",
-    data=csv,
-    file_name='top_spokespeople.csv',
-    mime='text/csv',
-)
+     label="Download data as CSV",
+     data=csv,
+     file_name='top_spokespeople.csv',
+     mime='text/csv',
+ )
 
