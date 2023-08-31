@@ -44,6 +44,7 @@ def generate_csv(frequencies):
     return output_file
 
 # Streamlit app
+# Streamlit app
 def main():
     st.title("Spokespeople Frequency Counter")
     
@@ -55,6 +56,13 @@ def main():
         frequencies = process_data(input_data)
         output_file = generate_csv(frequencies)
         st.success(f'CSV file "{output_file}" generated successfully.')
-
+        
+        # Download button for the CSV file
+        st.download_button(
+            label="Download CSV",
+            data=output_file,
+            file_name=output_file,
+            mime="text/csv"
+        )
 if __name__ == '__main__':
     main()
