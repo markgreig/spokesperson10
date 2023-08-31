@@ -2,56 +2,37 @@
 # coding: utf-8
 
 # In[ ]:
-import io
-import streamlit as st 
+import streamlit as st
 import pandas as pd
+import base64
 
-st.title("Generate Spokesperson Frequency CSV")
+# Get the data from the text input field
+text = st.text_input("Paste text here")
 
-# Get text input
-text = st.text_input("Paste data here")
+# Split the text into lines and extract the data
+lines = text.split("\n")
+data = []
+for line in lines:
+    parts = line.split()
+    frequency = int(parts[-1])
+    spokesperson = " ".join(parts[:-1])
+    data.append([spokesperson, frequency])
 
-# Validate input
-if not text:
-    st.error("Please enter valid CSV data")
-else:
-    # Convert text to DataFrame
-    try:
-        df = pd.read_csv(io.StringIO(text))
-    except Exception as e:
-        st.error("Error parsing input data")
+# Create a DataFrame from the data
+df = pd.DataFrame(data, columns=["Spokesperson", "Frequency"])
 
-    # Split rows on '|'
-    df = df.apply(lambda x: x.str.split('|').explode()).reset_index(drop=True)
+# Split out the rows with multiple spokespeople separated by the pipe symbol
+df = df.assign(Spokesperson=df["Spokesperson"].str.split("|")).explode("Spokesperson")
 
-    # Check if df is Series or DataFrame
-    if isinstance(df, pd.Series):
-        # Series has 1 unnamed column  
-        df = df.to_frame() 
-    else:
-        # DataFrame has columns
-        pass
-    
-    # Rename column to 'Spokesperson'
-    df = df.rename(columns={df.columns[0]: 'Spokesperson'})
+# Group the spokespeople so that only distinct spokespeople are left
+df = df.groupby("Spokesperson").sum().reset_index()
 
-    # Group and count frequencies 
-    df = df.groupby("Spokesperson", as_index=False)["Spokesperson"].count().rename(columns={"Spokesperson": "Frequency"})
+# Preview the output in Streamlit
+st.write(df)
 
-    # Display preview
-    st.dataframe(df)
+# Download the CSV file
+csv = df.to_csv(index=False)
+b64 = base64.b64encode(csv.encode()).decode()
+href = f'<a href="data:file/csv;base64,{b64}" download="spokespeople.csv">Download CSV File</a>'
+st.markdown(href, unsafe_allow_html=True)
 
-    # Download CSV
-    @st.cache
-    def convert_df(df):
-        return df.to_csv().encode('utf-8')
-
-    csv = convert_df(df)
-
-    st.download_button(
-        "Press to Download",
-        csv,
-        "spokesperson_frequency.csv",
-        "text/csv",
-        key='download-csv'
-    )
