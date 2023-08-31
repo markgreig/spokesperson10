@@ -2,26 +2,59 @@
 # coding: utf-8
 
 # In[ ]:
-import pandas as pd
 import streamlit as st
-from io import StringIO
+import csv
 
-data = st.text_input("Paste text here")
+def process_data(input_data):
+    # Split the input data into lines
+    lines = input_data.strip().split('\n')
+    
+    # Create a dictionary to store the frequencies of spokespeople
+    frequencies = {}
+    
+    # Iterate over each line and extract the spokespeople
+    for line in lines:
+        # Split the line into columns
+        columns = line.split('\t')
+        
+        # Extract the spokespeople from the second column
+        spokespeople = columns[1].split('|')
+        
+        # Update the frequencies dictionary
+        for spokesperson in spokespeople:
+            frequencies[spokesperson] = frequencies.get(spokesperson, 0) + 1
+    
+    return frequencies
 
-# Read the data into a pandas DataFrame
-df = pd.read_csv(StringIO(data), sep='\t')
+def generate_csv(frequencies):
+    # Specify the output file name
+    output_file = 'output.csv'
+    
+    # Open the file in write mode
+    with open(output_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        
+        # Write the header row
+        writer.writerow(['Spokesperson', 'Frequency'])
+        
+        # Write the data rows
+        for spokesperson, frequency in frequencies.items():
+            writer.writerow([spokesperson, frequency])
+    
+    return output_file
 
-# Expand the DataFrame to create a new row for each spokesperson in rows with multiple spokespeople
-df = df.assign(Spokesperson=df['Spokesperson'].str.split('|')).explode('Spokesperson')
+# Streamlit app
+def main():
+    st.title("Spokespeople Frequency Counter")
+    
+    # Text input for the data
+    input_data = st.text_area("Paste the data here:")
+    
+    # Process the data and generate the CSV file
+    if st.button("Generate CSV"):
+        frequencies = process_data(input_data)
+        output_file = generate_csv(frequencies)
+        st.success(f'CSV file "{output_file}" generated successfully.')
 
-# Group by 'Spokesperson' and sum the 'Frequency'
-df = df.groupby('Spokesperson', as_index=False).sum()
-
-# Display the DataFrame in Streamlit
-st.dataframe(df)
-
-# Write the DataFrame to a CSV file and provide a download link in Streamlit
-csv = df.to_csv(index=False)
-b64 = base64.b64encode(csv.encode()).decode()  # some strings
-linko= f'<a href="data:file/csv;base64,{b64}" download="myfilename.csv">Download csv file</a>'
-st.markdown(linko, unsafe_allow_html=True)
+if __name__ == '__main__':
+    main()
