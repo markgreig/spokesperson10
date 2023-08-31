@@ -56,4 +56,5 @@ def main():
         output_file = generate_csv(frequencies)
         st.success(f'CSV file "{output_file}" generated successfully.')
 
-
+if __name__ == '__main__':
+    main()
