@@ -2,37 +2,56 @@
 # coding: utf-8
 
 # In[ ]:
-import streamlit as st
+import re
 import pandas as pd
-import base64
+import streamlit as st
 
-# Get the data from the text input field
-text = st.text_input("Paste text here")
+text = st.text_input('Paste text here')
 
-# Split the text into lines and extract the data
-lines = text.split("\n")
+# Phase 1 - split rows on '\n'
+rows = text.split('\n')
+
+# Phase 2 - extract names and numbers
+pattern = '(.+?) (\d+)'
+
 data = []
-for line in lines:
-    parts = line.split()
-    if parts:
-        frequency = int(parts[-1])
-        spokesperson = " ".join(parts[:-1])
-        data.append([spokesperson, frequency])
 
-# Create a DataFrame from the data
-df = pd.DataFrame(data, columns=["Spokesperson", "Frequency"])
+for row in rows:
+    if '|' in row:
+        match = re.search(pattern, row)
+        if match:
+            name = match.group(1)
+            number = int(match.group(2))
+            data.append([name, number])
+    else:
+        words = row.split()
+        if len(words) >= 2:
+            name = ' '.join(words[:-1])
+            number = int(words[-1])
+            data.append([name, number])
 
-# Split out the rows with multiple spokespeople separated by the pipe symbol
-df = df.assign(Spokesperson=df["Spokesperson"].str.split("|")).explode("Spokesperson")
+# Create a DataFrame
+df = pd.DataFrame(data, columns=['Spokesperson', 'Frequency'])
 
-# Group the spokespeople so that only distinct spokespeople are left
-df = df.groupby("Spokesperson").sum().reset_index()
+# Group and aggregate the data
+top_spokespeople = df.groupby('Spokesperson')['Frequency'].sum().reset_index()
 
-# Preview the output in Streamlit
-st.write(df)
+# Sort the data by frequency in descending order
+top_spokespeople = top_spokespeople.sort_values(by='Frequency', ascending=False)
 
-# Download the CSV file
-csv = df.to_csv(index=False)
-b64 = base64.b64encode(csv.encode()).decode()
-href = f'<a href="data:file/csv;base64,{b64}" download="spokespeople.csv">Download CSV File</a>'
-st.markdown(href, unsafe_allow_html=True)
+# Display the DataFrame using Streamlit
+st.write(top_spokespeople)
+
+# Download button for CSV
+@st.cache
+def convert_df_to_csv(result):
+    return result.to_csv(index=False).encode('utf-8')
+
+csv = convert_df_to_csv(top_spokespeople)
+
+st.download_button(
+    label='Download data as CSV',
+    data=csv,
+    file_name='top_spokespeople.csv',
+    mime='text/csv',
+)
