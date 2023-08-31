@@ -9,12 +9,12 @@ import pandas as pd
 @st.cache
 def process_data(text):
     # Extract rows
-    rows = re.findall(r'\"?([^"]+)\"?\s(\d+)', text)
+    rows = re.findall(r'\"?([^"]+)\"?\s+(\d+)', text)
 
     # Split spokesperson column and create data list
     data = []
     for row in rows:
-        spokespersons = [name.strip() for name in row[0].strip().split('|')]
+        spokespersons = [name.strip() for name in row[0].strip().split('\t')]
         frequency = int(row[1])
         for spokesperson in spokespersons:
             data.append([spokesperson, frequency])
