@@ -3,7 +3,7 @@
 
 # In[ ]:
 import streamlit as st
-import csv
+import pandas as pd
 
 def process_data(input_data):
     # Split the input data into lines
@@ -27,23 +27,17 @@ def process_data(input_data):
     return frequencies
 
 def generate_csv(frequencies):
+    # Create a DataFrame from the frequencies dictionary
+    df = pd.DataFrame(frequencies.items(), columns=['Spokesperson', 'Frequency'])
+    
     # Specify the output file name
     output_file = 'output.csv'
     
-    # Open the file in write mode
-    with open(output_file, 'w', newline='') as file:
-        writer = csv.writer(file)
-        
-        # Write the header row
-        writer.writerow(['Spokesperson', 'Frequency'])
-        
-        # Write the data rows
-        for spokesperson, frequency in frequencies.items():
-            writer.writerow([spokesperson, frequency])
+    # Save the DataFrame as a CSV file
+    df.to_csv(output_file, index=False)
     
     return output_file
 
-# Streamlit app
 # Streamlit app
 def main():
     st.title("Spokespeople Frequency Counter")
@@ -57,12 +51,8 @@ def main():
         output_file = generate_csv(frequencies)
         st.success(f'CSV file "{output_file}" generated successfully.')
         
-        # Download button for the CSV file
-        st.download_button(
-            label="Download CSV",
-            data=output_file,
-            file_name=output_file,
-            mime="text/csv"
-        )
+        # Download link for the CSV file
+        st.markdown(f"Download the CSV file: [output.csv](./{output_file})")
+
 if __name__ == '__main__':
     main()
