@@ -4,6 +4,7 @@
 # In[ ]:
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 
 def process_data(input_data):
     # Split the input data into lines
@@ -30,10 +31,10 @@ def generate_csv(frequencies):
     # Create a DataFrame from the frequencies dictionary
     df = pd.DataFrame(frequencies.items(), columns=['Spokesperson', 'Frequency'])
     
-    # Specify the output file name
-    output_file = 'output.csv'
+    # Create a file-like object in memory
+    output_file = BytesIO()
     
-    # Save the DataFrame as a CSV file
+    # Save the DataFrame as a CSV file in the file-like object
     df.to_csv(output_file, index=False)
     
     return output_file
@@ -49,10 +50,19 @@ def main():
     if st.button("Generate CSV"):
         frequencies = process_data(input_data)
         output_file = generate_csv(frequencies)
-        st.success(f'CSV file "{output_file}" generated successfully.')
+        st.success('CSV file generated successfully.')
         
         # Download link for the CSV file
-        st.markdown(f"Download the CSV file: [output.csv](./{output_file})")
+        st.markdown(get_download_link(output_file, 'output.csv'), unsafe_allow_html=True)
+
+def get_download_link(file, file_name):
+    # Convert the file-like object to bytes
+    file_bytes = file.getvalue()
+    
+    # Generate a download link for the file
+    href = f'<a href="data:file/csv;base64,{file_bytes.decode()}" download="{file_name}">Download CSV file</a>'
+    
+    return href
 
 if __name__ == '__main__':
     main()
