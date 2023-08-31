@@ -14,9 +14,10 @@ lines = text.split("\n")
 data = []
 for line in lines:
     parts = line.split()
-    frequency = int(parts[-1])
-    spokesperson = " ".join(parts[:-1])
-    data.append([spokesperson, frequency])
+    if parts:
+        frequency = int(parts[-1])
+        spokesperson = " ".join(parts[:-1])
+        data.append([spokesperson, frequency])
 
 # Create a DataFrame from the data
 df = pd.DataFrame(data, columns=["Spokesperson", "Frequency"])
@@ -35,4 +36,3 @@ csv = df.to_csv(index=False)
 b64 = base64.b64encode(csv.encode()).decode()
 href = f'<a href="data:file/csv;base64,{b64}" download="spokespeople.csv">Download CSV File</a>'
 st.markdown(href, unsafe_allow_html=True)
-
