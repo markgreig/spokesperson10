@@ -12,7 +12,7 @@ text = st.text_input('Paste text here')
 rows = text.split('\n')
 
 # Phase 2 - extract names and numbers
-pattern = '(.+?) (\d+)'
+pattern = '([A-Za-z]+) (\d+)'
 
 data = []
 
@@ -25,10 +25,12 @@ for row in rows:
             data.append([name, number])
     else:
         words = row.split()
-        if len(words) >= 2:
-            name = ' '.join(words[:-1])
-            number = int(words[-1])
-            data.append([name, number])
+        for word in words:
+            match = re.search(pattern, word)
+            if match:
+                name = match.group(1)
+                number = int(match.group(2))
+                data.append([name, number])
 
 # Create a DataFrame
 df = pd.DataFrame(data, columns=['Spokesperson', 'Frequency'])
@@ -55,3 +57,4 @@ st.download_button(
     file_name='top_spokespeople.csv',
     mime='text/csv',
 )
+
