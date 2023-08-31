@@ -9,7 +9,7 @@ import pandas as pd
 @st.cache
 def process_data(text):
     # Extract rows
-    rows = re.findall(r'([^\d]+ [\d\w]+ [^\d]+)\s(\d+)', text)
+    rows = re.findall(r'([^\d]+ [\d\w\s]+)\s(\d+)', text)
 
     # Split spokesperson column and create data list
     data = []
